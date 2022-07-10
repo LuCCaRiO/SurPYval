@@ -234,9 +234,9 @@ class Game:
 
             if isinstance(entity, CraftingTile):
                 if entity.img_code == "woods":
-                    self.get_tile(entity, "sticks")
+                    self.get_tile(entity, "sticks", user_command)
                 if entity.img_code == "rocks":
-                    self.get_tile(entity, "stones")
+                    self.get_tile(entity, "stones", user_command)
 
             if isinstance(entity, Tile):
                 for player in players:
@@ -265,7 +265,7 @@ class Game:
                                ceil(SCREEN_WIDTH / TILE_SIZE),
                                ceil((SCREEN_HEIGHT - INVENTORY_HEIGHT) / TILE_SIZE)).read_tiles()
 
-    def get_tile(self, entity, item):
+    def get_tile(self, entity, item, user_command):
         mouse = pygame.mouse.get_pos()
         if self.invetory[item] >= self.receipe[entity.img_code]:
             if entity.animation != 0:
@@ -276,7 +276,7 @@ class Game:
 
             rect = pygame.Rect((entity.x, entity.y, entity.image.get_width(), entity.image.get_height()))
             if rect.collidepoint(mouse) and MOUSE_BUTTON_DOWN in user_command:
-                self.invetory[item] -= self.receipe[item]
+                self.invetory[item] -= self.receipe[entity.img_code]
                 self.invetory[entity.img_code] += 1
         else:
             entity.animation = 1
