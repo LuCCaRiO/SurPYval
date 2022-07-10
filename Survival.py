@@ -83,15 +83,18 @@ class Game:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption(GAME_NAME)
 
-        self.img_code_dict = {"woods": [pygame.image.load("./img/wood.png"), pygame.image.load("./img/wood2.png")],
+        self.img_code_dict = {"rocks": [pygame.image.load("./img/rock.png"), pygame.image.load("./img/rock2.png")],
+                              "woods": [pygame.image.load("./img/wood.png"), pygame.image.load("./img/wood2.png")],
                               "sticks": [pygame.image.load("./img/stick.png")],
                               "stones": [pygame.image.load("./img/wall1.png")],
                               "walls": [pygame.image.load("./img/pixil-frame-0.png")],
                               "player": [pygame.image.load("./img/player.png")]}
 
-        self.invetory = {"sticks": 0, "stones": 0, "woods": 100}
-        self.select_dict = {1: "sticks", 2: "stones", 3: "woods"}
-        self.selected = 1
+        self.invetory = {"sticks": 0, "stones": 0, "woods": 100, "rocks": 100}
+        self.select_dict = {1: "sticks", 2: "stones", 3: "woods", 4: "rocks"}
+        self.selected = 4
+
+        self.receipe = {"woods": 10, "rocks": 10}
 
         self.change_map(0)
 
@@ -112,7 +115,13 @@ class Game:
             InvetoryTile(self.img_code_dict["woods"], TILE_SIZE * 2, SCREEN_HEIGHT - TILE_SIZE, "woods",
                          self.quantitas_font))
         self.entitys.append(
+            InvetoryTile(self.img_code_dict["rocks"], TILE_SIZE * 3, SCREEN_HEIGHT - TILE_SIZE, "rocks",
+                         self.quantitas_font))
+        self.entitys.append(
             CraftingTile(self.img_code_dict["woods"], SCREEN_WIDTH / 2, SCREEN_HEIGHT - TILE_SIZE, "woods",
+                         self.quantitas_font))
+        self.entitys.append(
+            CraftingTile(self.img_code_dict["rocks"], SCREEN_WIDTH / 2 + TILE_SIZE, SCREEN_HEIGHT - TILE_SIZE, "rocks",
                          self.quantitas_font))
 
         self.game_running = True
@@ -139,6 +148,8 @@ class Game:
                     user_command.append(TWO_KEY)
                 if event.key == pygame.K_3:
                     user_command.append(THREE_KEY)
+                if event.key == pygame.K_4:
+                    user_command.append(FOUR_KEY)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 user_command.append(MOUSE_BUTTON_DOWN)
         key = pygame.key.get_pressed()
@@ -180,7 +191,7 @@ class Game:
 
     def physics(self, user_command):
         mouse = pygame.mouse.get_pos()
-        walls = hitbox_check(["woods"], self.entitys)
+        walls = hitbox_check(["woods", "rocks"], self.entitys)
         players = hitbox_check(["player"], self.entitys)
 
         if ONE_KEY in user_command:
@@ -189,6 +200,8 @@ class Game:
             self.selected = 2
         if THREE_KEY in user_command:
             self.selected = 3
+        if FOUR_KEY in user_command:
+            self.selected = 4
 
         for entity in self.entitys:
             if isinstance(entity, Player):
@@ -221,29 +234,16 @@ class Game:
 
             if isinstance(entity, CraftingTile):
                 if entity.img_code == "woods":
-                    if self.invetory["sticks"] >= 10:
-                        if entity.animation != 0:
-                            entity.animation = 0
-                            entity.image = self.img_code_dict[entity.img_code][entity.animation]
-                            entity.rect = pygame.Surface(
-                                self.img_code_dict[entity.img_code][entity.animation].get_size())
-
-                        rect = pygame.Rect((entity.x, entity.y, entity.image.get_width(), entity.image.get_height()))
-                        if rect.collidepoint(mouse) and MOUSE_BUTTON_DOWN in user_command:
-                            self.invetory["sticks"] -= 10
-                            self.invetory[entity.img_code] += 1
-                    else:
-                        entity.animation = 1
-                        entity.image = self.img_code_dict[entity.img_code][entity.animation]
-                        entity.rect = pygame.Surface(
-                            self.img_code_dict[entity.img_code][entity.animation].get_size())
+                    self.get_tile(entity, "sticks")
+                if entity.img_code == "rocks":
+                    self.get_tile(entity, "stones")
 
             if isinstance(entity, Tile):
                 for player in players:
                     if entity.img_code == "walls" and pygame.Rect(entity.rect).collidepoint(
                             mouse) and MOUSE_BUTTON_DOWN in user_command and self.invetory[
-                        self.select_dict[self.selected]] and not player.rect.colliderect(entity.rect) \
-                                                                 >= 1:
+                        self.select_dict[self.selected]] >= 1 and not \
+                            player.rect.colliderect(entity.rect):
                         self.invetory[self.select_dict[self.selected]] -= 1
                         tile_number = self.entitys.index(entity)
                         self.entitys.remove(entity)
@@ -264,6 +264,25 @@ class Game:
         self.entitys = TileMap(0, self.img_code_dict,
                                ceil(SCREEN_WIDTH / TILE_SIZE),
                                ceil((SCREEN_HEIGHT - INVENTORY_HEIGHT) / TILE_SIZE)).read_tiles()
+
+    def get_tile(self, entity, item):
+        mouse = pygame.mouse.get_pos()
+        if self.invetory[item] >= self.receipe[entity.img_code]:
+            if entity.animation != 0:
+                entity.animation = 0
+                entity.image = self.img_code_dict[entity.img_code][entity.animation]
+                entity.rect = pygame.Surface(
+                    self.img_code_dict[entity.img_code][entity.animation].get_size())
+
+            rect = pygame.Rect((entity.x, entity.y, entity.image.get_width(), entity.image.get_height()))
+            if rect.collidepoint(mouse) and MOUSE_BUTTON_DOWN in user_command:
+                self.invetory[item] -= self.receipe[item]
+                self.invetory[entity.img_code] += 1
+        else:
+            entity.animation = 1
+            entity.image = self.img_code_dict[entity.img_code][entity.animation]
+            entity.rect = pygame.Surface(
+                self.img_code_dict[entity.img_code][entity.animation].get_size())
 
 
 if __name__ == "__main__":

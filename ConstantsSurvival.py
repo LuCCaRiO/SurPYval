@@ -12,8 +12,6 @@ TILE_MAP = [[]]
 for i in range(256):
     TILE_MAP[0].append(random_dict[random.randint(0, 15)])
 
-#
-
 A_KEY = 0
 D_KEY = 1
 W_KEY = 2
@@ -23,6 +21,7 @@ MOUSE_BUTTON_DOWN = 5
 ONE_KEY = 6
 TWO_KEY = 7
 THREE_KEY = 8
+FOUR_KEY = 9
 
 SCREEN_WIDTH = TILE_SIZE * 16
 SCREEN_HEIGHT = TILE_SIZE * 16 + INVENTORY_HEIGHT
