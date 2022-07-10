@@ -97,7 +97,7 @@ class Game:
 
         self.entitys.append(
             Player(self.img_code_dict["player"], SCREEN_WIDTH / 2 - TILE_SIZE / 2,
-                   SCREEN_HEIGHT / 2 - INVENTORY_HEIGHT - TILE_SIZE / 2, 1,
+                   SCREEN_HEIGHT / 2 - INVENTORY_HEIGHT - TILE_SIZE / 2, "player",
                    3))
 
         self.quantitas_font = pygame.font.SysFont("impact", 15)
@@ -181,6 +181,7 @@ class Game:
     def physics(self, user_command):
         mouse = pygame.mouse.get_pos()
         walls = hitbox_check(["woods"], self.entitys)
+        players = hitbox_check(["player"], self.entitys)
 
         if ONE_KEY in user_command:
             self.selected = 1
@@ -238,24 +239,25 @@ class Game:
                             self.img_code_dict[entity.img_code][entity.animation].get_size())
 
             if isinstance(entity, Tile):
-                if entity.img_code == "walls" and pygame.Rect(entity.rect).collidepoint(
-                        mouse) and MOUSE_BUTTON_DOWN in user_command and self.invetory[
-                    self.select_dict[self.selected]] \
-                        >= 1:
-                    self.invetory[self.select_dict[self.selected]] -= 1
-                    tile_number = self.entitys.index(entity)
-                    self.entitys.remove(entity)
-                    self.entitys.insert(tile_number,
-                                        Tile(self.img_code_dict[self.select_dict[self.selected]], entity.rect.x,
-                                             entity.rect.y,
-                                             self.select_dict[self.selected]))
-                elif entity.img_code != "walls" and pygame.Rect(entity.rect).collidepoint(
-                        mouse) and MOUSE_BUTTON_DOWN in user_command:
-                    self.invetory[entity.img_code] += 1
-                    tile_number = self.entitys.index(entity)
-                    self.entitys.remove(entity)
-                    self.entitys.insert(tile_number,
-                                        Tile(self.img_code_dict["walls"], entity.rect.x, entity.rect.y, "walls"))
+                for player in players:
+                    if entity.img_code == "walls" and pygame.Rect(entity.rect).collidepoint(
+                            mouse) and MOUSE_BUTTON_DOWN in user_command and self.invetory[
+                        self.select_dict[self.selected]] and not player.rect.colliderect(entity.rect) \
+                                                                 >= 1:
+                        self.invetory[self.select_dict[self.selected]] -= 1
+                        tile_number = self.entitys.index(entity)
+                        self.entitys.remove(entity)
+                        self.entitys.insert(tile_number,
+                                            Tile(self.img_code_dict[self.select_dict[self.selected]], entity.rect.x,
+                                                 entity.rect.y,
+                                                 self.select_dict[self.selected]))
+                    elif entity.img_code != "walls" and pygame.Rect(entity.rect).collidepoint(
+                            mouse) and MOUSE_BUTTON_DOWN in user_command:
+                        self.invetory[entity.img_code] += 1
+                        tile_number = self.entitys.index(entity)
+                        self.entitys.remove(entity)
+                        self.entitys.insert(tile_number,
+                                            Tile(self.img_code_dict["walls"], entity.rect.x, entity.rect.y, "walls"))
 
     def change_map(self, map_number):
         self.tile_map_number = map_number
