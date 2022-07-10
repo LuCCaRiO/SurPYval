@@ -157,7 +157,10 @@ class Game:
 
         for entity in self.entitys:
             if isinstance(entity, InvetoryTile):
-                quantitas_text = entity.font.render(str(self.invetory[entity.img_code]), True, (255, 255, 255))
+                if entity.img_code == self.select_dict[self.selected]:
+                    quantitas_text = entity.font.render(str(self.invetory[entity.img_code]), True, (0, 0, 0))
+                else:
+                    quantitas_text = entity.font.render(str(self.invetory[entity.img_code]), True, (255, 255, 255))
                 entity.rect.blit(entity.image, (0, 0))
                 entity.rect.blit(quantitas_text, (0, 0))
                 self.screen.blit(entity.rect, (entity.x, entity.y))
