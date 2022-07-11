@@ -95,6 +95,7 @@ class Game:
         self.selected = 1
 
         self.receipe = {"woods": 5, "rocks": 10}  # 5 sticks --> 1 wood, 10 stones --> 1 rock
+        self.distance = 100
 
         self.change_map(0)
 
@@ -243,7 +244,10 @@ class Game:
                     if entity.img_code == "walls" and pygame.Rect(entity.rect).collidepoint(
                             mouse) and MOUSE_BUTTON_DOWN in user_command and self.invetory[
                         self.select_dict[self.selected]] >= 1 and not \
-                            player.rect.colliderect(entity.rect):
+                            player.rect.colliderect(entity.rect) and sqrt(
+                        abs(player.rect.centerx - entity.rect.centerx) ** 2
+                        + abs(player.rect.centery - entity.rect.centery) ** 2) \
+                            <= self.distance:
                         self.invetory[self.select_dict[self.selected]] -= 1
                         tile_number = self.entitys.index(entity)
                         self.entitys.remove(entity)
@@ -252,7 +256,10 @@ class Game:
                                                  entity.rect.y,
                                                  self.select_dict[self.selected]))
                     elif entity.img_code != "walls" and pygame.Rect(entity.rect).collidepoint(
-                            mouse) and MOUSE_BUTTON_DOWN in user_command:
+                            mouse) and MOUSE_BUTTON_DOWN in user_command and sqrt(
+                        abs(player.rect.centerx - entity.rect.centerx) ** 2
+                        + abs(player.rect.centery - entity.rect.centery) ** 2) \
+                            <= self.distance:
                         self.invetory[entity.img_code] += 1
                         tile_number = self.entitys.index(entity)
                         self.entitys.remove(entity)
