@@ -90,11 +90,11 @@ class Game:
                               "walls": [pygame.image.load("./img/pixil-frame-0.png")],
                               "player": [pygame.image.load("./img/player.png")]}
 
-        self.invetory = {"sticks": 0, "stones": 0, "woods": 100, "rocks": 100}
+        self.invetory = {"sticks": 0, "stones": 0, "woods": 0, "rocks": 0}
         self.select_dict = {1: "sticks", 2: "stones", 3: "woods", 4: "rocks"}
-        self.selected = 4
+        self.selected = 1
 
-        self.receipe = {"woods": 10, "rocks": 10}
+        self.receipe = {"woods": 5, "rocks": 10}  # 5 sticks --> 1 wood, 10 stones --> 1 rock
 
         self.change_map(0)
 

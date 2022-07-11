@@ -9,7 +9,7 @@ random_dict = {0: "walls", 1: "walls", 2: "walls", 3: "walls", 4: "walls", 5: "s
 
 TILE_MAP = [[]]
 
-for i in range(256):
+for i in range(368):
     TILE_MAP[0].append(random_dict[random.randint(0, 15)])
 
 A_KEY = 0
@@ -23,7 +23,7 @@ TWO_KEY = 7
 THREE_KEY = 8
 FOUR_KEY = 9
 
-SCREEN_WIDTH = TILE_SIZE * 16
+SCREEN_WIDTH = TILE_SIZE * 23
 SCREEN_HEIGHT = TILE_SIZE * 16 + INVENTORY_HEIGHT
 GAME_NAME = "Survival lol"
 FPS = 60
