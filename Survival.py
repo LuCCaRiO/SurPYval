@@ -83,33 +83,39 @@ class Game:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption(GAME_NAME)
 
+        pygame.time.set_timer(pygame.USEREVENT, 50)
+
         self.img_code_dict = {"rocks": [pygame.image.load("./img/rock.png"), pygame.image.load("./img/rock2.png")],
                               "woods": [pygame.image.load("./img/wood.png"), pygame.image.load("./img/wood2.png")],
                               "sticks": [pygame.image.load("./img/stick.png")],
                               "stones": [pygame.image.load("./img/wall1.png")],
                               "walls": [pygame.image.load("./img/pixil-frame-0.png")],
                               "player": [pygame.image.load("./img/player.png")],
-                              "hearth": [pygame.image.load("./img/hearth1.png")]}
+                              "heart": [pygame.image.load("./img/hearth1.png")],
+                              "stamina_bar": [pygame.image.load("./img/stamina bar.png")]}
 
         self.inventory = {"sticks": 0, "stones": 0, "woods": 0, "rocks": 0}
         self.select_dict = {1: "sticks", 2: "stones", 3: "woods", 4: "rocks"}
         self.selected = 1
 
         self.life = 6
+        self.endurance = 100
 
         self.recipe = {"woods": 5, "rocks": 10}  # 5 sticks --> 1 wood, 10 stones --> 1 rock
         self.distance = 100
+
+        self.FTYMS = False
 
         self.change_map(0)
 
         self.entitys.append(
             Player(self.img_code_dict["player"], SCREEN_WIDTH / 2 - TILE_SIZE / 2,
                    SCREEN_HEIGHT / 2 - INVENTORY_HEIGHT - TILE_SIZE / 2, "player",
-                   3))
+                   PLAYER_MIN_SPEED))
 
         self.quantitas_font = pygame.font.SysFont("impact", 15)
         self.normal_font = pygame.font.SysFont("bahnschrift", 20)
-        self.life_font = pygame.font.SysFont("twcen", 20)
+        self.bar_font = pygame.font.SysFont("twcen", 20)
 
         self.entitys.append(
             InvetoryTile(self.img_code_dict["sticks"], 0, SCREEN_HEIGHT - TILE_SIZE, "sticks", self.quantitas_font))
@@ -141,9 +147,13 @@ class Game:
 
     def handle_events(self):
         user_command = []
+        self.FTYMS = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.game_running = False
+            elif event.type == pygame.USEREVENT:
+                self.FTYMS = True
+
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_e:
                     user_command.append(E_KEY)
@@ -155,6 +165,7 @@ class Game:
                     user_command.append(THREE_KEY)
                 if event.key == pygame.K_4:
                     user_command.append(FOUR_KEY)
+
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 user_command.append(MOUSE_BUTTON_DOWN)
         key = pygame.key.get_pressed()
@@ -166,6 +177,8 @@ class Game:
             user_command.append(D_KEY)
         if key[pygame.K_a] and not key[pygame.K_d]:
             user_command.append(A_KEY)
+        if key[pygame.K_LSHIFT]:
+            user_command.append(LSHIFT_KEY)
         return user_command
 
     def render(self):
@@ -186,19 +199,26 @@ class Game:
             else:
                 self.screen.blit(entity.image, (entity.rect.x, entity.rect.y))
 
-        alpha = 255 / 2
+        alpha = 255 / 3 * 2
 
         inventory_text = self.normal_font.render("Inventory", True, (255, 255, 255))
         crafting_text = self.normal_font.render("Crafting", True, (255, 255, 255))
-        life_text = self.life_font.render(str(self.life), True, (255, 255, 255))
+        life_text = self.bar_font.render(str(self.life), True, (255, 255, 255))
+        endurance_text = self.bar_font.render(str(self.endurance), True, (255, 255, 255))
 
         self.screen.blit(inventory_text, (0, SCREEN_HEIGHT - INVENTORY_HEIGHT))
         self.screen.blit(crafting_text, (SCREEN_WIDTH / 2, SCREEN_HEIGHT - INVENTORY_HEIGHT))
-        image = self.img_code_dict["hearth"][0].copy()
-        image.fill((255, 255, 255, alpha), None, pygame.BLEND_RGBA_MULT)
-        self.screen.blit(image, (5, 5))
+        hearth_img = self.img_code_dict["heart"][0].copy()
+        stamina_bar_img = self.img_code_dict["stamina_bar"][0].copy()
+        hearth_img.fill((255, 255, 255, alpha), None, pygame.BLEND_RGBA_MULT)
+        stamina_bar_img.fill((255, 255, 255, alpha), None, pygame.BLEND_RGBA_MULT)
+        self.screen.blit(hearth_img, (5, 5))
+        self.screen.blit(stamina_bar_img, (50, 5))
         self.screen.blit(life_text, (
-            self.img_code_dict["hearth"][0].get_width() / 2, self.img_code_dict["hearth"][0].get_height() / 4))
+            self.img_code_dict["heart"][0].get_width() / 2, self.img_code_dict["heart"][0].get_height() / 4))
+        self.screen.blit(endurance_text, (
+            self.img_code_dict["stamina_bar"][0].get_width() / 2 + 50 - endurance_text.get_width() / 2,
+            self.img_code_dict["stamina_bar"][0].get_height() / 4))
 
         pygame.display.flip()
 
@@ -220,6 +240,19 @@ class Game:
             if isinstance(entity, Player):
                 entity.speed_x = 0
                 entity.speed_y = 0
+
+                if LSHIFT_KEY in user_command and self.endurance >= 1 and not self.endurance <= 0 and self.FTYMS:
+                    entity.speed = PLAYER_MAX_SPEED
+                    self.endurance -= 1
+                elif self.endurance < 100 and not self.endurance <= 0 and self.FTYMS:
+                    self.endurance += 1
+                    entity.speed = PLAYER_MIN_SPEED
+                elif self.endurance <= 0:
+                    if LSHIFT_KEY in user_command:
+                        entity.speed = PLAYER_MIN_SPEED
+                    else:
+                        self.endurance = 1
+
                 if W_KEY in user_command and 0 < entity.rect.top:
                     entity.speed_y = -entity.speed
                 if S_KEY in user_command and SCREEN_HEIGHT - INVENTORY_HEIGHT > entity.rect.bottom:
@@ -305,5 +338,4 @@ class Game:
 
 if __name__ == "__main__":
     pygame.init()
-    print(pygame.font.get_fonts())
     Game().run()
