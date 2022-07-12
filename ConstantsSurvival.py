@@ -3,6 +3,7 @@ import random
 BACKGROUND_COLOR = (0, 0, 0)
 TILE_SIZE = 32
 INVENTORY_HEIGHT = TILE_SIZE * 2
+TILE_SPEED = 5
 
 random_dict = {0: "walls", 1: "walls", 2: "walls", 3: "walls", 4: "walls", 5: "sticks", 6: "stones", 7: "walls",
                8: "walls", 9: "walls", 10: "walls", 11: "walls", 12: "walls", 13: "walls", 14: "walls", 15: "walls"}

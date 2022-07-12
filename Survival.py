@@ -88,13 +88,16 @@ class Game:
                               "sticks": [pygame.image.load("./img/stick.png")],
                               "stones": [pygame.image.load("./img/wall1.png")],
                               "walls": [pygame.image.load("./img/pixil-frame-0.png")],
-                              "player": [pygame.image.load("./img/player.png")]}
+                              "player": [pygame.image.load("./img/player.png")],
+                              "hearth": [pygame.image.load("./img/hearth1.png")]}
 
-        self.invetory = {"sticks": 0, "stones": 0, "woods": 0, "rocks": 0}
+        self.inventory = {"sticks": 0, "stones": 0, "woods": 0, "rocks": 0}
         self.select_dict = {1: "sticks", 2: "stones", 3: "woods", 4: "rocks"}
         self.selected = 1
 
-        self.receipe = {"woods": 5, "rocks": 10}  # 5 sticks --> 1 wood, 10 stones --> 1 rock
+        self.life = 6
+
+        self.recipe = {"woods": 5, "rocks": 10}  # 5 sticks --> 1 wood, 10 stones --> 1 rock
         self.distance = 100
 
         self.change_map(0)
@@ -106,6 +109,7 @@ class Game:
 
         self.quantitas_font = pygame.font.SysFont("impact", 15)
         self.normal_font = pygame.font.SysFont("bahnschrift", 20)
+        self.life_font = pygame.font.SysFont("twcen", 20)
 
         self.entitys.append(
             InvetoryTile(self.img_code_dict["sticks"], 0, SCREEN_HEIGHT - TILE_SIZE, "sticks", self.quantitas_font))
@@ -170,9 +174,9 @@ class Game:
         for entity in self.entitys:
             if isinstance(entity, InvetoryTile):
                 if entity.img_code == self.select_dict[self.selected]:
-                    quantitas_text = entity.font.render(str(self.invetory[entity.img_code]), True, (0, 0, 0))
+                    quantitas_text = entity.font.render(str(self.inventory[entity.img_code]), True, (0, 0, 0))
                 else:
-                    quantitas_text = entity.font.render(str(self.invetory[entity.img_code]), True, (255, 255, 255))
+                    quantitas_text = entity.font.render(str(self.inventory[entity.img_code]), True, (255, 255, 255))
                 entity.rect.blit(entity.image, (0, 0))
                 entity.rect.blit(quantitas_text, (0, 0))
                 self.screen.blit(entity.rect, (entity.x, entity.y))
@@ -182,11 +186,19 @@ class Game:
             else:
                 self.screen.blit(entity.image, (entity.rect.x, entity.rect.y))
 
+        alpha = 255 / 2
+
         inventory_text = self.normal_font.render("Inventory", True, (255, 255, 255))
         crafting_text = self.normal_font.render("Crafting", True, (255, 255, 255))
+        life_text = self.life_font.render(str(self.life), True, (255, 255, 255))
 
         self.screen.blit(inventory_text, (0, SCREEN_HEIGHT - INVENTORY_HEIGHT))
         self.screen.blit(crafting_text, (SCREEN_WIDTH / 2, SCREEN_HEIGHT - INVENTORY_HEIGHT))
+        image = self.img_code_dict["hearth"][0].copy()
+        image.fill((255, 255, 255, alpha), None, pygame.BLEND_RGBA_MULT)
+        self.screen.blit(image, (5, 5))
+        self.screen.blit(life_text, (
+            self.img_code_dict["hearth"][0].get_width() / 2, self.img_code_dict["hearth"][0].get_height() / 4))
 
         pygame.display.flip()
 
@@ -241,30 +253,29 @@ class Game:
 
             if isinstance(entity, Tile):
                 for player in players:
-                    if entity.img_code == "walls" and pygame.Rect(entity.rect).collidepoint(
-                            mouse) and MOUSE_BUTTON_DOWN in user_command and self.invetory[
-                        self.select_dict[self.selected]] >= 1 and not \
-                            player.rect.colliderect(entity.rect) and sqrt(
-                        abs(player.rect.centerx - entity.rect.centerx) ** 2
-                        + abs(player.rect.centery - entity.rect.centery) ** 2) \
+                    if MOUSE_BUTTON_DOWN in user_command and sqrt(
+                            abs(player.rect.centerx - entity.rect.centerx) ** 2
+                            + abs(player.rect.centery - entity.rect.centery) ** 2) \
                             <= self.distance:
-                        self.invetory[self.select_dict[self.selected]] -= 1
-                        tile_number = self.entitys.index(entity)
-                        self.entitys.remove(entity)
-                        self.entitys.insert(tile_number,
-                                            Tile(self.img_code_dict[self.select_dict[self.selected]], entity.rect.x,
-                                                 entity.rect.y,
-                                                 self.select_dict[self.selected]))
-                    elif entity.img_code != "walls" and pygame.Rect(entity.rect).collidepoint(
-                            mouse) and MOUSE_BUTTON_DOWN in user_command and sqrt(
-                        abs(player.rect.centerx - entity.rect.centerx) ** 2
-                        + abs(player.rect.centery - entity.rect.centery) ** 2) \
-                            <= self.distance:
-                        self.invetory[entity.img_code] += 1
-                        tile_number = self.entitys.index(entity)
-                        self.entitys.remove(entity)
-                        self.entitys.insert(tile_number,
-                                            Tile(self.img_code_dict["walls"], entity.rect.x, entity.rect.y, "walls"))
+                        if entity.img_code == "walls" and pygame.Rect(entity.rect).collidepoint(
+                                mouse) and self.inventory[
+                            self.select_dict[self.selected]] >= 1 and not \
+                                player.rect.colliderect(entity.rect):
+                            self.inventory[self.select_dict[self.selected]] -= 1
+                            tile_number = self.entitys.index(entity)
+                            self.entitys.remove(entity)
+                            self.entitys.insert(tile_number,
+                                                Tile(self.img_code_dict[self.select_dict[self.selected]], entity.rect.x,
+                                                     entity.rect.y,
+                                                     self.select_dict[self.selected]))
+                        elif entity.img_code != "walls" and pygame.Rect(entity.rect).collidepoint(
+                                mouse):
+                            self.inventory[entity.img_code] += 1
+                            tile_number = self.entitys.index(entity)
+                            self.entitys.remove(entity)
+                            self.entitys.insert(tile_number,
+                                                Tile(self.img_code_dict["walls"], entity.rect.x, entity.rect.y,
+                                                     "walls"))
 
     def change_map(self, map_number):
         self.tile_map_number = map_number
@@ -274,7 +285,7 @@ class Game:
 
     def get_tile(self, entity, item, user_command):
         mouse = pygame.mouse.get_pos()
-        if self.invetory[item] >= self.receipe[entity.img_code]:
+        if self.inventory[item] >= self.recipe[entity.img_code]:
             if entity.animation != 0:
                 entity.animation = 0
                 entity.image = self.img_code_dict[entity.img_code][entity.animation]
@@ -283,8 +294,8 @@ class Game:
 
             rect = pygame.Rect((entity.x, entity.y, entity.image.get_width(), entity.image.get_height()))
             if rect.collidepoint(mouse) and MOUSE_BUTTON_DOWN in user_command:
-                self.invetory[item] -= self.receipe[entity.img_code]
-                self.invetory[entity.img_code] += 1
+                self.inventory[item] -= self.recipe[entity.img_code]
+                self.inventory[entity.img_code] += 1
         else:
             entity.animation = 1
             entity.image = self.img_code_dict[entity.img_code][entity.animation]
@@ -294,4 +305,5 @@ class Game:
 
 if __name__ == "__main__":
     pygame.init()
+    print(pygame.font.get_fonts())
     Game().run()
